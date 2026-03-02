@@ -2,15 +2,52 @@
 
 A Rust TUI launcher for CTF practice environments, inspired by [`CTF-Archives/ctf-docker-template`](https://github.com/CTF-Archives/ctf-docker-template).
 
-## Why
+## Quick Start (Install + Use)
 
-CTF challenge reproduction is often messy: scattered folders, repetitive Docker commands, environment drift, and inconsistent writeups.
+### Install (recommended one-liner)
 
-`ctf-tui-launcher` standardizes the workflow into:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gandli/ctf-tui-launcher/main/install.sh)"
+```
 
-**Select challenge → Start target → Solve → Record → Reproduce**
+### Or install from source
 
-with a keyboard-first terminal experience.
+```bash
+cargo install --path .
+```
+
+After install, both commands are available:
+
+- `ctf-tui` (short alias, recommended)
+- `ctf-tui-launcher` (full name)
+
+### First run
+
+```bash
+ctf-tui init
+ctf-tui doctor
+ctf-tui tui
+```
+
+You can run `ctf-tui` from any challenge subdirectory. The tool walks upward to detect project root by checking `challenges.toml` or `challenges/`.
+
+---
+
+## CLI Usage (`ctf-tui`)
+
+```bash
+ctf-tui tui        # start interactive TUI (default if omitted)
+ctf-tui init       # create challenges.toml from template (if missing)
+ctf-tui doctor     # inspect workspace/challenges and compose availability
+ctf-tui help       # show command help
+```
+
+Equivalent full-name usage:
+
+```bash
+ctf-tui-launcher tui
+ctf-tui-launcher doctor
+```
 
 ## Current Features (M2 + M3)
 
@@ -89,72 +126,8 @@ and includes directories containing one of:
 - `a`: generate `challenges.toml`
 - `Esc` or `g`: close guide
 
-## CLI Usage (`ctf-tui`)
-
-Install locally:
-
-```bash
-cargo install --path .
-```
-
-One-line install script:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gandli/ctf-tui-launcher/main/install.sh)"
-```
-
-After install, both commands are available:
-
-- `ctf-tui` (short alias, recommended)
-- `ctf-tui-launcher` (full name)
-
-### Subcommands
-
-```bash
-ctf-tui tui        # start interactive TUI (default if omitted)
-ctf-tui init       # create challenges.toml from template (if missing)
-ctf-tui doctor     # inspect workspace/challenges and compose availability
-ctf-tui help       # show command help
-```
-
-Equivalent full-name usage:
-
-```bash
-ctf-tui-launcher tui
-ctf-tui-launcher doctor
-```
-
-### Typical workflow
-
-```bash
-ctf-tui init       # bootstrap config once
-ctf-tui doctor     # verify discovered/configured challenges
-ctf-tui tui        # enter interactive mode
-```
-
-You can run `ctf-tui` from any challenge subdirectory. The tool walks upward to detect project root by looking for `challenges.toml` or `challenges/`.
-
 ## Tech Stack
 
 - UI: `ratatui` + `crossterm`
 - Config: `serde` + `toml`
 - Runtime: `std::process::Command` (Docker CLI)
-
-## Repository Structure
-
-```text
-.
-├── src/
-├── docs/
-│   └── PRD.MD
-├── challenges.toml.example
-├── Cargo.toml
-└── README.md
-```
-
-## Roadmap (next)
-
-- Better in-app log UX (jump to bottom, tail-follow mode)
-- Safer shell/container interaction
-- Native challenge metadata discovery (category/difficulty conventions)
-- Optional writeup template customization
