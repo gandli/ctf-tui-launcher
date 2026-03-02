@@ -29,6 +29,8 @@ with a keyboard-first terminal experience.
 - Status persistence to `challenges.toml` when config file is present
 - Compose file validation before Docker actions
 - Auto-discovery fallback when no `challenges.toml` is provided
+- Built-in guide panel for adding challenges (`g`)
+- One-key config bootstrap (`a`) to create `challenges.toml`
 
 ## Configuration
 
@@ -71,6 +73,8 @@ and includes directories containing one of:
 - `w`: generate writeup
 - `t`: cycle challenge status
 - `r`: reload challenges
+- `a`: create `challenges.toml` from template
+- `g`: open add-challenge guide panel
 - `q`: quit
 
 ### Logs panel
@@ -79,6 +83,11 @@ and includes directories containing one of:
 - `r`: refresh logs
 - `Esc` or `l`: close logs panel
 - `q`: quit app
+
+### Guide panel
+
+- `a`: generate `challenges.toml`
+- `Esc` or `g`: close guide
 
 ## Run
 

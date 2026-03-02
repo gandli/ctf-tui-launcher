@@ -69,6 +69,7 @@ struct App {
     workspace_root: PathBuf,
     config_path: Option<PathBuf>,
     show_logs: bool,
+    show_guide: bool,
     log_lines: Vec<String>,
     log_scroll: u16,
 }
@@ -84,6 +85,7 @@ impl App {
             workspace_root,
             config_path,
             show_logs: false,
+            show_guide: false,
             log_lines: vec!["Press l to load docker logs".to_string()],
             log_scroll: 0,
         }
@@ -287,7 +289,49 @@ impl App {
         self.status_message = "Challenges reloaded".to_string();
     }
 
+    fn bootstrap_challenges_toml(&mut self) {
+        let dst = self.workspace_root.join("challenges.toml");
+        if dst.exists() {
+            self.status_message = format!("challenges.toml already exists: {}", dst.display());
+            return;
+        }
+
+        let src = self.workspace_root.join("challenges.toml.example");
+        let content = if src.exists() {
+            match fs::read_to_string(&src) {
+                Ok(v) => v,
+                Err(e) => {
+                    self.status_message = format!("failed to read example file: {e}");
+                    return;
+                }
+            }
+        } else {
+            "[[challenges]]\nname = \"your-challenge\"\ncategory = \"Crypto\"\ndifficulty = \"Easy\"\nstatus = \"todo\"\ndescription = \"Describe this challenge\"\nworkdir = \"./challenges/your-challenge/docker\"\n".to_string()
+        };
+
+        match fs::write(&dst, content) {
+            Ok(_) => {
+                self.status_message = format!("Created {}. Edit it and press r to reload.", dst.display());
+                self.config_path = Some(dst);
+            }
+            Err(e) => self.status_message = format!("create challenges.toml failed: {e}"),
+        }
+    }
+
     fn on_key(&mut self, code: KeyCode) -> bool {
+        if self.show_guide {
+            match code {
+                KeyCode::Esc | KeyCode::Char('g') => {
+                    self.show_guide = false;
+                    self.status_message = "Close guide".to_string();
+                }
+                KeyCode::Char('a') => self.bootstrap_challenges_toml(),
+                KeyCode::Char('q') => return false,
+                _ => {}
+            }
+            return true;
+        }
+
         if self.show_logs {
             match code {
                 KeyCode::Esc | KeyCode::Char('l') => {
@@ -309,6 +353,8 @@ impl App {
             KeyCode::Char('k') | KeyCode::Up => self.prev(),
             KeyCode::Char('t') => self.cycle_status(),
             KeyCode::Char('r') => self.reload_challenges(),
+            KeyCode::Char('g') => self.show_guide = true,
+            KeyCode::Char('a') => self.bootstrap_challenges_toml(),
             KeyCode::Enter => self.status_message = "Open challenge details (next step).".to_string(),
             KeyCode::Char('u') => self.status_message = self.run_docker_action(&["up", "-d"]),
             KeyCode::Char('d') => self.status_message = self.run_docker_action(&["down"]),
@@ -469,6 +515,39 @@ fn run_app(
 }
 
 fn ui(f: &mut Frame, app: &App) {
+    if app.show_guide {
+        let guide = vec![
+            Line::styled("Add Challenges Guide", Style::default().add_modifier(Modifier::BOLD)),
+            Line::raw(""),
+            Line::raw("1) Preferred: create challenges.toml from template"),
+            Line::raw("   - Press 'a' to generate challenges.toml automatically"),
+            Line::raw("   - Edit name/category/difficulty/workdir for each challenge"),
+            Line::raw("   - Press 'r' in main view to reload"),
+            Line::raw(""),
+            Line::raw("2) Auto-discovery mode (no config file)"),
+            Line::raw("   - Put challenges under ./challenges/<name>/docker"),
+            Line::raw("   - Ensure compose file exists:"),
+            Line::raw("     docker-compose.yml / docker-compose.yaml / compose.yml / compose.yaml"),
+            Line::raw(""),
+            Line::raw("3) Run actions"),
+            Line::raw("   - u: up, d: down, l: logs, s: shell, w: writeup"),
+            Line::raw(""),
+            Line::raw("[a] create config  [Esc/g] close guide"),
+        ];
+
+        let panel = Paragraph::new(guide)
+            .block(
+                Block::default()
+                    .title(" Guide ")
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Green)),
+            )
+            .wrap(Wrap { trim: true });
+
+        f.render_widget(panel, f.area());
+        return;
+    }
+
     if app.show_logs {
         let logs = app
             .log_lines
@@ -566,7 +645,8 @@ fn ui(f: &mut Frame, app: &App) {
             Line::raw(&c.description),
             Line::raw(""),
             Line::styled("Actions", Style::default().add_modifier(Modifier::BOLD)),
-            Line::raw("u: up | d: down | l: logs-panel | s: shell | w: writeup | t: cycle status | r: reload"),
+            Line::raw("u: up | d: down | l: logs-panel | s: shell | w: writeup | t: cycle status"),
+            Line::raw("r: reload | a: create config | g: guide"),
         ]
     } else {
         vec![Line::raw("No challenge loaded.")]
@@ -584,7 +664,7 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(detail_panel, main_chunks[1]);
 
     let footer = Paragraph::new(format!(
-        "[j/k] move [u/d/l/s/w/t/r] actions [q] quit | {}",
+        "[j/k] move [u/d/l/s/w/t/r/a/g] actions [q] quit | {}",
         app.status_message
     ))
     .block(
