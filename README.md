@@ -89,30 +89,44 @@ and includes directories containing one of:
 - `a`: generate `challenges.toml`
 - `Esc` or `g`: close guide
 
-## CLI Usage
+## CLI Usage (`ctf-tui`)
 
-Install:
+Install locally:
 
 ```bash
 cargo install --path .
 ```
 
-Commands:
+After install, both commands are available:
+
+- `ctf-tui` (short alias, recommended)
+- `ctf-tui-launcher` (full name)
+
+### Subcommands
 
 ```bash
-ctf-tui tui        # run interactive TUI (default)
-ctf-tui init       # create challenges.toml from template
-ctf-tui doctor     # check workspace/challenges/compose files
-ctf-tui help
+ctf-tui tui        # start interactive TUI (default if omitted)
+ctf-tui init       # create challenges.toml from template (if missing)
+ctf-tui doctor     # inspect workspace/challenges and compose availability
+ctf-tui help       # show command help
 ```
 
-Long command also works:
+Equivalent full-name usage:
 
 ```bash
 ctf-tui-launcher tui
+ctf-tui-launcher doctor
 ```
 
-You can run the command from any challenge subdirectory. The tool walks upward to detect project root by looking for `challenges.toml` or `challenges/`.
+### Typical workflow
+
+```bash
+ctf-tui init       # bootstrap config once
+ctf-tui doctor     # verify discovered/configured challenges
+ctf-tui tui        # enter interactive mode
+```
+
+You can run `ctf-tui` from any challenge subdirectory. The tool walks upward to detect project root by looking for `challenges.toml` or `challenges/`.
 
 ## Tech Stack
 
