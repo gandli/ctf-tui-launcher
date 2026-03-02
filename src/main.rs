@@ -1,4 +1,4 @@
-use std::{error::Error, io, time::Duration};
+use std::{error::Error, io, process::Command, time::Duration};
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
@@ -38,6 +38,7 @@ struct Challenge {
     difficulty: &'static str,
     status: ChallengeStatus,
     description: &'static str,
+    workdir: &'static str,
 }
 
 #[derive(Debug)]
@@ -57,6 +58,7 @@ impl App {
                     difficulty: "Easy",
                     status: ChallengeStatus::Todo,
                     description: "Recover plaintext using weak RSA key setup.",
+                    workdir: "./challenges/rsa-baby/docker",
                 },
                 Challenge {
                     name: "fmt-lab",
@@ -64,6 +66,7 @@ impl App {
                     difficulty: "Medium",
                     status: ChallengeStatus::Doing,
                     description: "Practice format string leak and arbitrary write.",
+                    workdir: "./challenges/fmt-lab/docker",
                 },
                 Challenge {
                     name: "tiny-note",
@@ -71,6 +74,7 @@ impl App {
                     difficulty: "Easy",
                     status: ChallengeStatus::Done,
                     description: "Reproduce auth bypass via cookie tampering.",
+                    workdir: "./challenges/tiny-note/docker",
                 },
             ],
             selected: 0,
@@ -100,16 +104,40 @@ impl App {
         };
     }
 
+    fn run_docker_action(&self, args: &[&str]) -> String {
+        let Some(challenge) = self.selected_challenge() else {
+            return "No challenge selected".to_string();
+        };
+
+        let output = Command::new("docker")
+            .args(["compose"])
+            .args(args)
+            .current_dir(challenge.workdir)
+            .output();
+
+        match output {
+            Ok(out) if out.status.success() => {
+                format!("✅ docker compose {} ({})", args.join(" "), challenge.name)
+            }
+            Ok(out) => {
+                let stderr = String::from_utf8_lossy(&out.stderr);
+                let brief = stderr.lines().next().unwrap_or("command failed");
+                format!("❌ {} | {}", challenge.name, brief)
+            }
+            Err(e) => format!("❌ {} | {}", challenge.name, e),
+        }
+    }
+
     fn on_key(&mut self, code: KeyCode) -> bool {
         match code {
             KeyCode::Char('q') => return false,
             KeyCode::Char('j') | KeyCode::Down => self.next(),
             KeyCode::Char('k') | KeyCode::Up => self.prev(),
             KeyCode::Enter => self.status_message = "Open challenge details (next step).".to_string(),
-            KeyCode::Char('u') => self.status_message = "TODO: docker compose up -d".to_string(),
-            KeyCode::Char('d') => self.status_message = "TODO: docker compose down".to_string(),
-            KeyCode::Char('l') => self.status_message = "TODO: docker compose logs -f".to_string(),
-            KeyCode::Char('s') => self.status_message = "TODO: open container shell".to_string(),
+            KeyCode::Char('u') => self.status_message = self.run_docker_action(&["up", "-d"]),
+            KeyCode::Char('d') => self.status_message = self.run_docker_action(&["down"]),
+            KeyCode::Char('l') => self.status_message = self.run_docker_action(&["logs", "--tail", "60"]),
+            KeyCode::Char('s') => self.status_message = "TODO: open interactive shell pane".to_string(),
             KeyCode::Char('w') => self.status_message = "TODO: generate writeup scaffold".to_string(),
             _ => {}
         }
@@ -215,11 +243,15 @@ fn ui(f: &mut Frame, app: &App) {
                 Span::styled("Status: ", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(c.status.badge()),
             ]),
+            Line::from(vec![
+                Span::styled("Workdir: ", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(c.workdir),
+            ]),
             Line::raw(""),
             Line::styled("Description", Style::default().add_modifier(Modifier::BOLD)),
             Line::raw(c.description),
             Line::raw(""),
-            Line::styled("Actions (M2 skeleton)", Style::default().add_modifier(Modifier::BOLD)),
+            Line::styled("Actions", Style::default().add_modifier(Modifier::BOLD)),
             Line::raw("u: up | d: down | l: logs | s: shell | w: writeup | Enter: open"),
         ]
     } else {
