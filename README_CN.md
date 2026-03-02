@@ -13,6 +13,15 @@
 ### 或从源码安装
 
 ```bash
+# 1) 克隆仓库
+git clone https://github.com/gandli/ctf-tui-launcher.git
+cd ctf-tui-launcher
+
+# 2) 若本机没有 cargo，先安装 Rust 工具链（macOS / Linux）
+curl https://sh.rustup.rs -sSf | sh
+source "$HOME/.cargo/env"
+
+# 3) 安装命令行工具
 cargo install --path .
 ```
 

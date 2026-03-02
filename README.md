@@ -15,6 +15,16 @@ A Rust TUI launcher for CTF practice environments, inspired by [`CTF-Archives/ct
 ### Or install from source
 
 ```bash
+# 1) clone repository
+git clone https://github.com/gandli/ctf-tui-launcher.git
+cd ctf-tui-launcher
+
+# 2) install Rust toolchain (if cargo is missing)
+# macOS / Linux:
+curl https://sh.rustup.rs -sSf | sh
+source "$HOME/.cargo/env"
+
+# 3) install the CLI
 cargo install --path .
 ```
 
