@@ -6,6 +6,27 @@ A Rust TUI launcher for CTF practice environments, inspired by [`CTF-Archives/ct
 
 ## Quick Start (Install + Use)
 
+## Prerequisites
+
+Before using `ctf-tui`, make sure these are installed:
+
+- **Docker** (required for challenge environments)
+- Git
+- Rust / Cargo
+
+Check dependencies:
+
+```bash
+docker --version
+docker compose version
+git --version
+cargo --version
+```
+
+If Docker is missing:
+- macOS / Windows: install Docker Desktop
+- Linux: install Docker Engine + Docker Compose plugin
+
 ### Install by OS
 
 #### macOS

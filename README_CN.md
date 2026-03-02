@@ -4,6 +4,27 @@
 
 ## 快速开始（安装 + 使用）
 
+## 依赖前置
+
+使用 `ctf-tui` 前请先确保已安装：
+
+- **Docker**（题目环境运行必需）
+- Git
+- Rust / Cargo
+
+可先检查：
+
+```bash
+docker --version
+docker compose version
+git --version
+cargo --version
+```
+
+如果 Docker 未安装：
+- macOS / Windows：安装 Docker Desktop
+- Linux：安装 Docker Engine + Docker Compose 插件
+
 ### 按系统安装
 
 #### macOS
