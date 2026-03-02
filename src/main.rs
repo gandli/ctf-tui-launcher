@@ -452,33 +452,6 @@ fn discover_challenges_from_fs(root: &Path) -> Vec<Challenge> {
     out
 }
 
-fn has_compose_file(workdir: &Path) -> bool {
-    ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"]
-        .iter()
-        .any(|f| workdir.join(f).exists())
-}
-
-fn default_challenges() -> Vec<Challenge> {
-    vec![
-        Challenge {
-            name: "rsa-baby".into(),
-            category: "Crypto".into(),
-            difficulty: "Easy".into(),
-            status: ChallengeStatus::Todo,
-            description: "Recover plaintext using weak RSA key setup.".into(),
-            workdir: "./challenges/rsa-baby/docker".into(),
-        },
-        Challenge {
-            name: "fmt-lab".into(),
-            category: "Pwn".into(),
-            difficulty: "Medium".into(),
-            status: ChallengeStatus::Doing,
-            description: "Practice format string leak and arbitrary write.".into(),
-            workdir: "./challenges/fmt-lab/docker".into(),
-        },
-    ]
-}
-
 enum CliCommand {
     Tui,
     Init,
@@ -486,9 +459,12 @@ enum CliCommand {
     Help,
 }
 
-fn parse_command() -> CliCommand {
-    let mut args = env::args().skip(1);
-    match args.next().as_deref() {
+fn parse_command_from<I, S>(mut args: I) -> CliCommand
+where
+    I: Iterator<Item = S>,
+    S: AsRef<str>,
+{
+    match args.next().map(|s| s.as_ref().to_string()).as_deref() {
         None => CliCommand::Tui,
         Some("tui") => CliCommand::Tui,
         Some("init") => CliCommand::Init,
@@ -496,6 +472,10 @@ fn parse_command() -> CliCommand {
         Some("help") | Some("-h") | Some("--help") => CliCommand::Help,
         Some(_) => CliCommand::Help,
     }
+}
+
+fn parse_command() -> CliCommand {
+    parse_command_from(env::args().skip(1))
 }
 
 fn print_help() {
@@ -564,6 +544,33 @@ fn run_doctor() {
         let ok = has_compose_file(&wd);
         println!("- {:20} compose: {:7} workdir: {}", c.name, if ok { "ok" } else { "missing" }, wd.display());
     }
+}
+
+fn has_compose_file(workdir: &Path) -> bool {
+    ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"]
+        .iter()
+        .any(|f| workdir.join(f).exists())
+}
+
+fn default_challenges() -> Vec<Challenge> {
+    vec![
+        Challenge {
+            name: "rsa-baby".into(),
+            category: "Crypto".into(),
+            difficulty: "Easy".into(),
+            status: ChallengeStatus::Todo,
+            description: "Recover plaintext using weak RSA key setup.".into(),
+            workdir: "./challenges/rsa-baby/docker".into(),
+        },
+        Challenge {
+            name: "fmt-lab".into(),
+            category: "Pwn".into(),
+            difficulty: "Medium".into(),
+            status: ChallengeStatus::Doing,
+            description: "Practice format string leak and arbitrary write.".into(),
+            workdir: "./challenges/fmt-lab/docker".into(),
+        },
+    ]
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -761,4 +768,51 @@ fn ui(f: &mut Frame, app: &App) {
     );
 
     f.render_widget(footer, chunks[1]);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_command_variants() {
+        assert!(matches!(parse_command_from(std::iter::empty::<&str>()), CliCommand::Tui));
+        assert!(matches!(parse_command_from(["tui"].into_iter()), CliCommand::Tui));
+        assert!(matches!(parse_command_from(["init"].into_iter()), CliCommand::Init));
+        assert!(matches!(parse_command_from(["doctor"].into_iter()), CliCommand::Doctor));
+        assert!(matches!(parse_command_from(["help"].into_iter()), CliCommand::Help));
+        assert!(matches!(parse_command_from(["--help"].into_iter()), CliCommand::Help));
+        assert!(matches!(parse_command_from(["unknown"].into_iter()), CliCommand::Help));
+    }
+
+    #[test]
+    fn has_compose_file_detects_supported_names() {
+        let base = env::temp_dir().join(format!("ctf-tui-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base);
+        fs::create_dir_all(&base).unwrap();
+
+        assert!(!has_compose_file(&base));
+        fs::write(base.join("docker-compose.yml"), "services:{}").unwrap();
+        assert!(has_compose_file(&base));
+
+        let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn discover_challenges_finds_valid_docker_dirs() {
+        let root = env::temp_dir().join(format!("ctf-tui-discover-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("challenges/alpha/docker")).unwrap();
+        fs::create_dir_all(root.join("challenges/beta/docker")).unwrap();
+        fs::create_dir_all(root.join("challenges/gamma/no-docker")).unwrap();
+
+        fs::write(root.join("challenges/alpha/docker/docker-compose.yml"), "services:{}").unwrap();
+        fs::write(root.join("challenges/beta/docker/compose.yaml"), "services:{}").unwrap();
+
+        let list = discover_challenges_from_fs(&root);
+        let names: Vec<_> = list.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, vec!["alpha", "beta"]);
+
+        let _ = fs::remove_dir_all(&root);
+    }
 }
