@@ -73,10 +73,7 @@ struct App {
 
 impl App {
     fn new() -> Self {
-        let (challenges, config_path) = match load_challenges() {
-            Ok(v) => v,
-            Err(_) => (default_challenges(), None),
-        };
+        let (challenges, config_path) = load_challenges_with_fallback();
         Self {
             challenges,
             selected: 0,
@@ -114,6 +111,10 @@ impl App {
         let Some(challenge) = self.selected_challenge() else {
             return "No challenge selected".to_string();
         };
+
+        if !has_compose_file(&challenge.workdir) {
+            return format!("❌ {} | compose file not found in {}", challenge.name, challenge.workdir);
+        }
 
         let output = Command::new("docker")
             .args(["compose"])
@@ -262,6 +263,14 @@ impl App {
         self.log_scroll = self.log_scroll.saturating_sub(1);
     }
 
+    fn reload_challenges(&mut self) {
+        let (challenges, config_path) = load_challenges_with_fallback();
+        self.challenges = challenges;
+        self.config_path = config_path;
+        self.selected = 0;
+        self.status_message = "Challenges reloaded".to_string();
+    }
+
     fn on_key(&mut self, code: KeyCode) -> bool {
         if self.show_logs {
             match code {
@@ -283,6 +292,7 @@ impl App {
             KeyCode::Char('j') | KeyCode::Down => self.next(),
             KeyCode::Char('k') | KeyCode::Up => self.prev(),
             KeyCode::Char('t') => self.cycle_status(),
+            KeyCode::Char('r') => self.reload_challenges(),
             KeyCode::Enter => self.status_message = "Open challenge details (next step).".to_string(),
             KeyCode::Char('u') => self.status_message = self.run_docker_action(&["up", "-d"]),
             KeyCode::Char('d') => self.status_message = self.run_docker_action(&["down"]),
@@ -298,7 +308,20 @@ impl App {
     }
 }
 
-fn load_challenges() -> Result<(Vec<Challenge>, Option<PathBuf>), Box<dyn Error>> {
+fn load_challenges_with_fallback() -> (Vec<Challenge>, Option<PathBuf>) {
+    if let Ok(v) = load_challenges_from_toml() {
+        return v;
+    }
+
+    let discovered = discover_challenges_from_fs();
+    if !discovered.is_empty() {
+        return (discovered, None);
+    }
+
+    (default_challenges(), None)
+}
+
+fn load_challenges_from_toml() -> Result<(Vec<Challenge>, Option<PathBuf>), Box<dyn Error>> {
     let path = PathBuf::from("challenges.toml");
     if !path.exists() {
         return Err("challenges.toml not found".into());
@@ -310,6 +333,53 @@ fn load_challenges() -> Result<(Vec<Challenge>, Option<PathBuf>), Box<dyn Error>
         return Err("no challenges in config".into());
     }
     Ok((parsed.challenges, Some(path)))
+}
+
+fn discover_challenges_from_fs() -> Vec<Challenge> {
+    let mut out = Vec::new();
+    let base = Path::new("challenges");
+    let Ok(entries) = fs::read_dir(base) else {
+        return out;
+    };
+
+    for entry in entries.flatten() {
+        let p = entry.path();
+        if !p.is_dir() {
+            continue;
+        }
+
+        let docker_dir = p.join("docker");
+        if !docker_dir.exists() {
+            continue;
+        }
+
+        let has_compose = ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"]
+            .iter()
+            .any(|f| docker_dir.join(f).exists());
+        if !has_compose {
+            continue;
+        }
+
+        let name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+        out.push(Challenge {
+            name,
+            category: "Unknown".into(),
+            difficulty: "Unknown".into(),
+            status: ChallengeStatus::Todo,
+            description: "Auto-discovered challenge (edit challenges.toml for details).".into(),
+            workdir: docker_dir.display().to_string(),
+        });
+    }
+
+    out.sort_by(|a, b| a.name.cmp(&b.name));
+    out
+}
+
+fn has_compose_file(workdir: &str) -> bool {
+    let dir = Path::new(workdir);
+    ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"]
+        .iter()
+        .any(|f| dir.join(f).exists())
 }
 
 fn default_challenges() -> Vec<Challenge> {
@@ -454,12 +524,16 @@ fn ui(f: &mut Frame, app: &App) {
                 Span::styled("Workdir: ", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(&c.workdir),
             ]),
+            Line::from(vec![
+                Span::styled("Compose: ", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(if has_compose_file(&c.workdir) { "found" } else { "missing" }),
+            ]),
             Line::raw(""),
             Line::styled("Description", Style::default().add_modifier(Modifier::BOLD)),
             Line::raw(&c.description),
             Line::raw(""),
             Line::styled("Actions", Style::default().add_modifier(Modifier::BOLD)),
-            Line::raw("u: up | d: down | l: logs-panel | s: shell | w: writeup | t: cycle status"),
+            Line::raw("u: up | d: down | l: logs-panel | s: shell | w: writeup | t: cycle status | r: reload"),
         ]
     } else {
         vec![Line::raw("No challenge loaded.")]
@@ -477,7 +551,7 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(detail_panel, main_chunks[1]);
 
     let footer = Paragraph::new(format!(
-        "[j/k] move [u/d/l/s/w/t] actions [q] quit | {}",
+        "[j/k] move [u/d/l/s/w/t/r] actions [q] quit | {}",
         app.status_message
     ))
     .block(

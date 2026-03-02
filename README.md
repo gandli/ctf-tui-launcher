@@ -65,6 +65,8 @@ cargo run
 
 Optional: create `challenges.toml` from `challenges.toml.example` to load your own challenge list.
 
+If `challenges.toml` is missing, the app will auto-discover challenge folders under `./challenges/*/docker` that contain a compose file.
+
 ## Status
 
 M2 skeleton is implemented. M3 currently includes:
