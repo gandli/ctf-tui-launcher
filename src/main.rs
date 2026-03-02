@@ -68,6 +68,7 @@ struct App {
     config_path: Option<PathBuf>,
     show_logs: bool,
     log_lines: Vec<String>,
+    log_scroll: u16,
 }
 
 impl App {
@@ -83,6 +84,7 @@ impl App {
             config_path,
             show_logs: false,
             log_lines: vec!["Press l to load docker logs".to_string()],
+            log_scroll: 0,
         }
     }
 
@@ -151,6 +153,7 @@ impl App {
                     lines.push("(no logs yet)".to_string());
                 }
                 self.log_lines = lines;
+                self.log_scroll = self.log_lines.len().saturating_sub(1) as u16;
                 self.status_message = format!("Logs loaded ({})", challenge.name);
             }
             Ok(out) => {
@@ -162,10 +165,12 @@ impl App {
                 if self.log_lines.is_empty() {
                     self.log_lines = vec!["failed to fetch logs".to_string()];
                 }
+                self.log_scroll = 0;
                 self.status_message = format!("❌ logs failed ({})", challenge.name);
             }
             Err(e) => {
                 self.log_lines = vec![format!("failed to execute docker compose logs: {e}")];
+                self.log_scroll = 0;
                 self.status_message = format!("❌ logs failed ({})", challenge.name);
             }
         }
@@ -248,6 +253,15 @@ impl App {
         };
     }
 
+    fn logs_scroll_down(&mut self) {
+        let max = self.log_lines.len().saturating_sub(1) as u16;
+        self.log_scroll = self.log_scroll.saturating_add(1).min(max);
+    }
+
+    fn logs_scroll_up(&mut self) {
+        self.log_scroll = self.log_scroll.saturating_sub(1);
+    }
+
     fn on_key(&mut self, code: KeyCode) -> bool {
         if self.show_logs {
             match code {
@@ -256,6 +270,8 @@ impl App {
                     self.status_message = "Close logs panel".to_string();
                 }
                 KeyCode::Char('r') => self.refresh_logs(),
+                KeyCode::Char('j') | KeyCode::Down => self.logs_scroll_down(),
+                KeyCode::Char('k') | KeyCode::Up => self.logs_scroll_up(),
                 KeyCode::Char('q') => return false,
                 _ => {}
             }
@@ -364,10 +380,11 @@ fn ui(f: &mut Frame, app: &App) {
         let panel = Paragraph::new(logs)
             .block(
                 Block::default()
-                    .title(" Logs (ESC/l to close, r to refresh) ")
+                    .title(" Logs (j/k scroll, r refresh, ESC/l close) ")
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(Color::Yellow)),
             )
+            .scroll((app.log_scroll, 0))
             .wrap(Wrap { trim: false });
 
         f.render_widget(panel, f.area());
