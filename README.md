@@ -97,6 +97,12 @@ Install locally:
 cargo install --path .
 ```
 
+One-line install script:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gandli/ctf-tui-launcher/main/install.sh)"
+```
+
 After install, both commands are available:
 
 - `ctf-tui` (short alias, recommended)
