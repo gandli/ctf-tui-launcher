@@ -51,37 +51,48 @@ winget install Rustlang.Rustup
 cargo install --path .
 ```
 
-### 包管理器一键安装（发布后可用）
+### 包管理器安装支持矩阵
 
-发布完成后，可直接使用：
+#### macOS
 
-#### Homebrew（macOS / Linux）
+- Homebrew ✅
+  ```bash
+  brew tap gandli/ctf-tui
+  brew install ctf-tui
+  ```
+- MacPorts 🧩（规划中）
 
-```bash
-brew tap gandli/ctf-tui
-brew install ctf-tui
-```
+#### Linux
 
-#### Scoop（Windows）
+- Homebrew（Linuxbrew）✅
+  ```bash
+  brew tap gandli/ctf-tui
+  brew install ctf-tui
+  ```
+- apt（Debian/Ubuntu）🧩（规划中）
+- dnf（Fedora/RHEL）🧩（规划中）
+- pacman（Arch）🧩（规划中）
+- zypper（openSUSE）🧩（规划中）
+- nix / nix-env 🧩（规划中）
 
-```powershell
-scoop bucket add gandli https://github.com/gandli/scoop-bucket
-scoop install ctf-tui
-```
+#### Windows
 
-#### Winget（Windows）
+- Winget ✅
+  ```powershell
+  winget install gandli.ctf-tui
+  ```
+- Scoop ✅
+  ```powershell
+  scoop bucket add gandli https://github.com/gandli/scoop-bucket
+  scoop install ctf-tui
+  ```
+- Chocolatey ✅
+  ```powershell
+  choco install ctf-tui -y
+  ```
 
-```powershell
-winget install gandli.ctf-tui
-```
-
-#### Chocolatey（Windows）
-
-```powershell
-choco install ctf-tui -y
-```
-
-以上包模板中已声明 Docker 依赖（作为安装/运行前置）。
+> 说明：✅ 表示已准备仓库/清单，具体生态收录与同步可能有延迟。
+> 在支持的生态模板中，已声明 Docker 依赖。
 
 ### 源码安装（通用）
 

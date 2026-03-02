@@ -53,37 +53,48 @@ winget install Rustlang.Rustup
 cargo install --path .
 ```
 
-### Package manager one-liner installs (planned distribution)
+### Package manager install matrix
 
-After package publishing is completed, you can install directly:
+#### macOS
 
-#### Homebrew (macOS / Linux)
+- Homebrew ✅
+  ```bash
+  brew tap gandli/ctf-tui
+  brew install ctf-tui
+  ```
+- MacPorts 🧩 (planned)
 
-```bash
-brew tap gandli/ctf-tui
-brew install ctf-tui
-```
+#### Linux
 
-#### Scoop (Windows)
+- Homebrew (Linuxbrew) ✅
+  ```bash
+  brew tap gandli/ctf-tui
+  brew install ctf-tui
+  ```
+- apt (Debian/Ubuntu) 🧩 (planned)
+- dnf (Fedora/RHEL) 🧩 (planned)
+- pacman (Arch) 🧩 (planned)
+- zypper (openSUSE) 🧩 (planned)
+- nix / nix-env 🧩 (planned)
 
-```powershell
-scoop bucket add gandli https://github.com/gandli/scoop-bucket
-scoop install ctf-tui
-```
+#### Windows
 
-#### Winget (Windows)
+- Winget ✅
+  ```powershell
+  winget install gandli.ctf-tui
+  ```
+- Scoop ✅
+  ```powershell
+  scoop bucket add gandli https://github.com/gandli/scoop-bucket
+  scoop install ctf-tui
+  ```
+- Chocolatey ✅
+  ```powershell
+  choco install ctf-tui -y
+  ```
 
-```powershell
-winget install gandli.ctf-tui
-```
-
-#### Chocolatey (Windows)
-
-```powershell
-choco install ctf-tui -y
-```
-
-These packages are configured to declare Docker as dependency metadata in their manifests/templates.
+> Note: ✅ means repository/manifests are prepared; ecosystem ingestion and propagation can take time.
+> Docker is declared as dependency metadata where ecosystem format supports it.
 
 ### Universal source install (all platforms)
 
