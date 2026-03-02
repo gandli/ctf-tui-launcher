@@ -67,7 +67,12 @@ Optional: create `challenges.toml` from `challenges.toml.example` to load your o
 
 ## Status
 
-M2 skeleton is implemented. M3 has basic Docker actions (`up/down/logs/ps`) and writeup scaffold generation.
+M2 skeleton is implemented. M3 currently includes:
+
+- Docker actions: `up/down/logs`
+- `s` to open a shell in the selected challenge workdir
+- `w` to generate a writeup scaffold
+- `t` to cycle challenge status (`todo -> doing -> done`) and persist to `challenges.toml` (when present).
 
 If you want to contribute, open an issue with one of these labels:
 

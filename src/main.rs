@@ -20,9 +20,9 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
     Frame, Terminal,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum ChallengeStatus {
     Todo,
@@ -40,7 +40,7 @@ impl ChallengeStatus {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 struct Challenge {
     name: String,
     category: String,
@@ -55,7 +55,7 @@ fn default_status() -> ChallengeStatus {
     ChallengeStatus::Todo
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct ChallengeFile {
     challenges: Vec<Challenge>,
 }
@@ -65,15 +65,20 @@ struct App {
     challenges: Vec<Challenge>,
     selected: usize,
     status_message: String,
+    config_path: Option<PathBuf>,
 }
 
 impl App {
     fn new() -> Self {
-        let challenges = load_challenges().unwrap_or_else(default_challenges);
+        let (challenges, config_path) = match load_challenges() {
+            Ok(v) => v,
+            Err(_) => (default_challenges(), None),
+        };
         Self {
             challenges,
             selected: 0,
             status_message: "Ready. Press q to quit.".to_string(),
+            config_path,
         }
     }
 
@@ -148,16 +153,69 @@ impl App {
         }
     }
 
+    fn cycle_status(&mut self) {
+        let Some(ch) = self.challenges.get_mut(self.selected) else {
+            self.status_message = "No challenge selected".to_string();
+            return;
+        };
+
+        ch.status = match ch.status {
+            ChallengeStatus::Todo => ChallengeStatus::Doing,
+            ChallengeStatus::Doing => ChallengeStatus::Done,
+            ChallengeStatus::Done => ChallengeStatus::Todo,
+        };
+
+        self.status_message = format!("Status -> {} ({})", ch.status.badge(), ch.name);
+        if let Err(e) = self.save_challenges() {
+            self.status_message = format!("{} | save failed: {}", self.status_message, e);
+        }
+    }
+
+    fn save_challenges(&self) -> Result<(), Box<dyn Error>> {
+        let Some(path) = &self.config_path else {
+            return Ok(());
+        };
+        let payload = ChallengeFile {
+            challenges: self.challenges.clone(),
+        };
+        let text = toml::to_string_pretty(&payload)?;
+        fs::write(path, text)?;
+        Ok(())
+    }
+
+    fn open_shell(&mut self) {
+        let Some(challenge) = self.selected_challenge() else {
+            self.status_message = "No challenge selected".to_string();
+            return;
+        };
+
+        let _ = disable_raw_mode();
+        let _ = execute!(io::stdout(), LeaveAlternateScreen);
+
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| "bash".to_string());
+        let result = Command::new(shell).current_dir(&challenge.workdir).status();
+
+        let _ = execute!(io::stdout(), EnterAlternateScreen);
+        let _ = enable_raw_mode();
+
+        self.status_message = match result {
+            Ok(st) if st.success() => format!("Shell exited ({})", challenge.name),
+            Ok(_) => format!("Shell exited with non-zero code ({})", challenge.name),
+            Err(e) => format!("Open shell failed: {}", e),
+        };
+    }
+
     fn on_key(&mut self, code: KeyCode) -> bool {
         match code {
             KeyCode::Char('q') => return false,
             KeyCode::Char('j') | KeyCode::Down => self.next(),
             KeyCode::Char('k') | KeyCode::Up => self.prev(),
+            KeyCode::Char('t') => self.cycle_status(),
             KeyCode::Enter => self.status_message = "Open challenge details (next step).".to_string(),
             KeyCode::Char('u') => self.status_message = self.run_docker_action(&["up", "-d"]),
             KeyCode::Char('d') => self.status_message = self.run_docker_action(&["down"]),
             KeyCode::Char('l') => self.status_message = self.run_docker_action(&["logs", "--tail", "60"]),
-            KeyCode::Char('s') => self.status_message = self.run_docker_action(&["ps"]),
+            KeyCode::Char('s') => self.open_shell(),
             KeyCode::Char('w') => self.status_message = self.generate_writeup(),
             _ => {}
         }
@@ -165,18 +223,18 @@ impl App {
     }
 }
 
-fn load_challenges() -> Result<Vec<Challenge>, Box<dyn Error>> {
-    let path = Path::new("challenges.toml");
+fn load_challenges() -> Result<(Vec<Challenge>, Option<PathBuf>), Box<dyn Error>> {
+    let path = PathBuf::from("challenges.toml");
     if !path.exists() {
         return Err("challenges.toml not found".into());
     }
 
-    let content = fs::read_to_string(path)?;
+    let content = fs::read_to_string(&path)?;
     let parsed: ChallengeFile = toml::from_str(&content)?;
     if parsed.challenges.is_empty() {
         return Err("no challenges in config".into());
     }
-    Ok(parsed.challenges)
+    Ok((parsed.challenges, Some(path)))
 }
 
 fn default_challenges() -> Vec<Challenge> {
@@ -305,7 +363,7 @@ fn ui(f: &mut Frame, app: &App) {
             Line::raw(&c.description),
             Line::raw(""),
             Line::styled("Actions", Style::default().add_modifier(Modifier::BOLD)),
-            Line::raw("u: up | d: down | l: logs | s: status(ps) | w: writeup | Enter: open"),
+            Line::raw("u: up | d: down | l: logs | s: shell | w: writeup | t: cycle status"),
         ]
     } else {
         vec![Line::raw("No challenge loaded.")]
@@ -323,7 +381,7 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(detail_panel, main_chunks[1]);
 
     let footer = Paragraph::new(format!(
-        "[j/k] move [u/d/l/s/w] actions [q] quit | {}",
+        "[j/k] move [u/d/l/s/w/t] actions [q] quit | {}",
         app.status_message
     ))
     .block(
