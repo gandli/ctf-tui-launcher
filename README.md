@@ -275,6 +275,8 @@ The project includes a release workflow:
 - `.github/workflows/release.yml`
 - trigger by tag: `v*` (example: `v0.1.0`)
 - publishes binaries + `checksums.txt` to GitHub Releases
+- auto-generates GitHub Release notes
+- version history tracked in `CHANGELOG.md`
 
 Packaging templates are provided in `packaging/` for:
 

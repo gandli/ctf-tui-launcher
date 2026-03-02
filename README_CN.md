@@ -232,6 +232,8 @@ workdir = "./challenges/rsa-baby/docker"
 - `.github/workflows/release.yml`
 - 通过 Git tag `v*` 触发（例如 `v0.1.0`）
 - 自动发布多平台二进制与 `checksums.txt`
+- 自动生成 GitHub Release 版本说明
+- 版本变更记录维护在 `CHANGELOG.md`
 
 `packaging/` 目录已提供模板：
 
