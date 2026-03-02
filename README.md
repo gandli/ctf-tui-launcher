@@ -173,6 +173,24 @@ ctf-tui-launcher doctor
 
 ## Configuration
 
+### Guided setup (recommended)
+
+Use the built-in guide flow inside TUI:
+
+1. Run `ctf-tui tui`
+2. Press `g` to open the guide panel
+3. Press `a` to generate `challenges.toml`
+4. Edit generated `challenges.toml`
+5. Back in TUI, press `r` to reload
+
+Or use CLI-only guided bootstrap:
+
+```bash
+ctf-tui init
+ctf-tui doctor
+ctf-tui tui
+```
+
 ### Option A: Explicit config (`challenges.toml`)
 
 Copy `challenges.toml.example` to `challenges.toml` and edit fields.

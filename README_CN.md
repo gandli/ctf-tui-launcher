@@ -164,6 +164,24 @@ ctf-tui help       # 查看帮助
 
 ## 配置方式
 
+### 引导式配置（推荐）
+
+在 TUI 内按引导完成：
+
+1. 运行 `ctf-tui tui`
+2. 按 `g` 打开引导面板
+3. 按 `a` 自动生成 `challenges.toml`
+4. 编辑生成的 `challenges.toml`
+5. 回到 TUI 按 `r` 重载
+
+也可用命令行引导流程：
+
+```bash
+ctf-tui init
+ctf-tui doctor
+ctf-tui tui
+```
+
 ### 方式 A：`challenges.toml` 显式配置
 
 复制 `challenges.toml.example` 为 `challenges.toml` 并编辑：
