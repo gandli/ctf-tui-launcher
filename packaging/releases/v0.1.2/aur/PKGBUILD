@@ -1,0 +1,14 @@
+pkgname=ctf-tui
+pkgver=0.1.2
+pkgrel=1
+pkgdesc="CTF TUI launcher for challenge environment workflows"
+arch=('x86_64')
+url="https://github.com/gandli/ctf-tui-launcher"
+license=('MIT')
+depends=('docker')
+source=("$pkgname-$pkgver-x86_64.tar.gz::https://github.com/gandli/ctf-tui-launcher/releases/download/v${pkgver}/ctf-tui-linux-x86_64.tar.gz")
+sha256sums=('f2e3b64ab7d28263de0f92fa8db4bba80847763dabb9a3ac693d764bcf8197a2')
+
+package() {
+  install -Dm755 ctf-tui "$pkgdir/usr/bin/ctf-tui"
+}
