@@ -1,0 +1,15 @@
+[[challenges]]
+name = "rsa-baby"
+category = "Crypto"
+difficulty = "Easy"
+status = "todo"
+description = "Recover plaintext using weak RSA key setup."
+workdir = "./challenges/rsa-baby/docker"
+
+[[challenges]]
+name = "fmt-lab"
+category = "Pwn"
+difficulty = "Medium"
+status = "doing"
+description = "Practice format string leak and arbitrary write."
+workdir = "./challenges/fmt-lab/docker"

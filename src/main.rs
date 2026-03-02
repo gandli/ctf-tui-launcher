@@ -1,4 +1,11 @@
-use std::{error::Error, io, process::Command, time::Duration};
+use std::{
+    error::Error,
+    fs,
+    io,
+    path::{Path, PathBuf},
+    process::Command,
+    time::Duration,
+};
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
@@ -13,8 +20,10 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
     Frame, Terminal,
 };
+use serde::Deserialize;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
 enum ChallengeStatus {
     Todo,
     Doing,
@@ -31,14 +40,24 @@ impl ChallengeStatus {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct Challenge {
-    name: &'static str,
-    category: &'static str,
-    difficulty: &'static str,
+    name: String,
+    category: String,
+    difficulty: String,
+    #[serde(default = "default_status")]
     status: ChallengeStatus,
-    description: &'static str,
-    workdir: &'static str,
+    description: String,
+    workdir: String,
+}
+
+fn default_status() -> ChallengeStatus {
+    ChallengeStatus::Todo
+}
+
+#[derive(Debug, Deserialize)]
+struct ChallengeFile {
+    challenges: Vec<Challenge>,
 }
 
 #[derive(Debug)]
@@ -50,33 +69,9 @@ struct App {
 
 impl App {
     fn new() -> Self {
+        let challenges = load_challenges().unwrap_or_else(default_challenges);
         Self {
-            challenges: vec![
-                Challenge {
-                    name: "rsa-baby",
-                    category: "Crypto",
-                    difficulty: "Easy",
-                    status: ChallengeStatus::Todo,
-                    description: "Recover plaintext using weak RSA key setup.",
-                    workdir: "./challenges/rsa-baby/docker",
-                },
-                Challenge {
-                    name: "fmt-lab",
-                    category: "Pwn",
-                    difficulty: "Medium",
-                    status: ChallengeStatus::Doing,
-                    description: "Practice format string leak and arbitrary write.",
-                    workdir: "./challenges/fmt-lab/docker",
-                },
-                Challenge {
-                    name: "tiny-note",
-                    category: "Web",
-                    difficulty: "Easy",
-                    status: ChallengeStatus::Done,
-                    description: "Reproduce auth bypass via cookie tampering.",
-                    workdir: "./challenges/tiny-note/docker",
-                },
-            ],
+            challenges,
             selected: 0,
             status_message: "Ready. Press q to quit.".to_string(),
         }
@@ -112,7 +107,7 @@ impl App {
         let output = Command::new("docker")
             .args(["compose"])
             .args(args)
-            .current_dir(challenge.workdir)
+            .current_dir(&challenge.workdir)
             .output();
 
         match output {
@@ -128,6 +123,31 @@ impl App {
         }
     }
 
+    fn generate_writeup(&self) -> String {
+        let Some(challenge) = self.selected_challenge() else {
+            return "No challenge selected".to_string();
+        };
+
+        let dir = PathBuf::from("writeups");
+        if let Err(e) = fs::create_dir_all(&dir) {
+            return format!("❌ create writeups dir failed: {e}");
+        }
+
+        let path = dir.join(format!("{}.md", challenge.name));
+        let tpl = format!(
+            "# {name}\n\n## Basic Info\n- Category: {category}\n- Difficulty: {difficulty}\n- Workdir: {workdir}\n\n## Environment\n- Docker compose command:\n  - up: `docker compose up -d`\n  - down: `docker compose down`\n\n## Analysis\n-\n\n## Exploit / Solution\n-\n\n## Reproduction Steps\n1.\n2.\n3.\n\n## Pitfalls\n-\n",
+            name = challenge.name,
+            category = challenge.category,
+            difficulty = challenge.difficulty,
+            workdir = challenge.workdir
+        );
+
+        match fs::write(&path, tpl) {
+            Ok(_) => format!("📝 writeup generated: {}", path.display()),
+            Err(e) => format!("❌ writeup failed: {e}"),
+        }
+    }
+
     fn on_key(&mut self, code: KeyCode) -> bool {
         match code {
             KeyCode::Char('q') => return false,
@@ -137,12 +157,47 @@ impl App {
             KeyCode::Char('u') => self.status_message = self.run_docker_action(&["up", "-d"]),
             KeyCode::Char('d') => self.status_message = self.run_docker_action(&["down"]),
             KeyCode::Char('l') => self.status_message = self.run_docker_action(&["logs", "--tail", "60"]),
-            KeyCode::Char('s') => self.status_message = "TODO: open interactive shell pane".to_string(),
-            KeyCode::Char('w') => self.status_message = "TODO: generate writeup scaffold".to_string(),
+            KeyCode::Char('s') => self.status_message = self.run_docker_action(&["ps"]),
+            KeyCode::Char('w') => self.status_message = self.generate_writeup(),
             _ => {}
         }
         true
     }
+}
+
+fn load_challenges() -> Result<Vec<Challenge>, Box<dyn Error>> {
+    let path = Path::new("challenges.toml");
+    if !path.exists() {
+        return Err("challenges.toml not found".into());
+    }
+
+    let content = fs::read_to_string(path)?;
+    let parsed: ChallengeFile = toml::from_str(&content)?;
+    if parsed.challenges.is_empty() {
+        return Err("no challenges in config".into());
+    }
+    Ok(parsed.challenges)
+}
+
+fn default_challenges() -> Vec<Challenge> {
+    vec![
+        Challenge {
+            name: "rsa-baby".into(),
+            category: "Crypto".into(),
+            difficulty: "Easy".into(),
+            status: ChallengeStatus::Todo,
+            description: "Recover plaintext using weak RSA key setup.".into(),
+            workdir: "./challenges/rsa-baby/docker".into(),
+        },
+        Challenge {
+            name: "fmt-lab".into(),
+            category: "Pwn".into(),
+            difficulty: "Medium".into(),
+            status: ChallengeStatus::Doing,
+            description: "Practice format string leak and arbitrary write.".into(),
+            workdir: "./challenges/fmt-lab/docker".into(),
+        },
+    ]
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -214,14 +269,12 @@ fn ui(f: &mut Frame, app: &App) {
         })
         .collect();
 
-    let list = List::new(items)
-        .block(
-            Block::default()
-                .title(" Challenges ")
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::Cyan)),
-        )
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD));
+    let list = List::new(items).block(
+        Block::default()
+            .title(" Challenges ")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Cyan)),
+    );
 
     f.render_widget(list, main_chunks[0]);
 
@@ -229,15 +282,15 @@ fn ui(f: &mut Frame, app: &App) {
         vec![
             Line::from(vec![
                 Span::styled("Name: ", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(c.name),
+                Span::raw(&c.name),
             ]),
             Line::from(vec![
                 Span::styled("Category: ", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(c.category),
+                Span::raw(&c.category),
             ]),
             Line::from(vec![
                 Span::styled("Difficulty: ", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(c.difficulty),
+                Span::raw(&c.difficulty),
             ]),
             Line::from(vec![
                 Span::styled("Status: ", Style::default().add_modifier(Modifier::BOLD)),
@@ -245,14 +298,14 @@ fn ui(f: &mut Frame, app: &App) {
             ]),
             Line::from(vec![
                 Span::styled("Workdir: ", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(c.workdir),
+                Span::raw(&c.workdir),
             ]),
             Line::raw(""),
             Line::styled("Description", Style::default().add_modifier(Modifier::BOLD)),
-            Line::raw(c.description),
+            Line::raw(&c.description),
             Line::raw(""),
             Line::styled("Actions", Style::default().add_modifier(Modifier::BOLD)),
-            Line::raw("u: up | d: down | l: logs | s: shell | w: writeup | Enter: open"),
+            Line::raw("u: up | d: down | l: logs | s: status(ps) | w: writeup | Enter: open"),
         ]
     } else {
         vec![Line::raw("No challenge loaded.")]
@@ -270,7 +323,7 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(detail_panel, main_chunks[1]);
 
     let footer = Paragraph::new(format!(
-        "[j/k] move  [Enter] open  [u/d/l/s/w] actions  [q] quit  | {}",
+        "[j/k] move [u/d/l/s/w] actions [q] quit | {}",
         app.status_message
     ))
     .block(

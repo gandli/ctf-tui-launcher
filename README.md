@@ -57,9 +57,17 @@ with a keyboard-first terminal experience.
 - [ ] Add writeup generation
 - [ ] Add error handling and health indicators
 
+## Run (Current Skeleton)
+
+```bash
+cargo run
+```
+
+Optional: create `challenges.toml` from `challenges.toml.example` to load your own challenge list.
+
 ## Status
 
-Currently in bootstrap stage.
+M2 skeleton is implemented. M3 has basic Docker actions (`up/down/logs/ps`) and writeup scaffold generation.
 
 If you want to contribute, open an issue with one of these labels:
 
