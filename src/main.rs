@@ -157,6 +157,7 @@ impl App {
             return;
         };
 
+        let challenge_name = challenge.name.clone();
         let workdir = self.challenge_workdir_path(challenge);
         let output = Command::new("docker")
             .args(["compose", "logs", "--tail", "120", "--no-color"])
@@ -172,7 +173,7 @@ impl App {
                 }
                 self.log_lines = lines;
                 self.log_scroll = self.log_lines.len().saturating_sub(1) as u16;
-                self.status_message = format!("Logs loaded ({})", challenge.name);
+                self.status_message = format!("Logs loaded ({})", challenge_name);
             }
             Ok(out) => {
                 let stderr = String::from_utf8_lossy(&out.stderr);
@@ -184,12 +185,12 @@ impl App {
                     self.log_lines = vec!["failed to fetch logs".to_string()];
                 }
                 self.log_scroll = 0;
-                self.status_message = format!("❌ logs failed ({})", challenge.name);
+                self.status_message = format!("❌ logs failed ({})", challenge_name);
             }
             Err(e) => {
                 self.log_lines = vec![format!("failed to execute docker compose logs: {e}")];
                 self.log_scroll = 0;
-                self.status_message = format!("❌ logs failed ({})", challenge.name);
+                self.status_message = format!("❌ logs failed ({})", challenge_name);
             }
         }
     }
