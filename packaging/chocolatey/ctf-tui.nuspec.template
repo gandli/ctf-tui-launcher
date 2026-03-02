@@ -9,6 +9,9 @@
     <licenseUrl>https://github.com/gandli/ctf-tui-launcher/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>CTF TUI launcher for challenge environment workflows</description>
+    <dependencies>
+      <dependency id="docker-desktop" />
+    </dependencies>
     <tags>ctf tui security docker</tags>
   </metadata>
 </package>

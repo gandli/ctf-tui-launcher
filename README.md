@@ -53,43 +53,37 @@ winget install Rustlang.Rustup
 cargo install --path .
 ```
 
-### Package manager installs (brew / scoop / winget / choco)
+### Package manager one-liner installs (planned distribution)
 
-> These methods install dependencies (Rust/Git) via package managers, then install `ctf-tui` with Cargo.
+After package publishing is completed, you can install directly:
 
 #### Homebrew (macOS / Linux)
 
 ```bash
-brew install rustup-init git
-rustup-init -y
-source "$HOME/.cargo/env"
-cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+brew tap gandli/ctf-tui
+brew install ctf-tui
 ```
 
 #### Scoop (Windows)
 
 ```powershell
-scoop install git rustup
-rustup-init -y
-cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+scoop bucket add gandli https://github.com/gandli/scoop-bucket
+scoop install ctf-tui
 ```
 
 #### Winget (Windows)
 
 ```powershell
-winget install Git.Git
-winget install Rustlang.Rustup
-rustup-init -y
-cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+winget install gandli.ctf-tui
 ```
 
 #### Chocolatey (Windows)
 
 ```powershell
-choco install git rustup.install -y
-rustup-init -y
-cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+choco install ctf-tui -y
 ```
+
+These packages are configured to declare Docker as dependency metadata in their manifests/templates.
 
 ### Universal source install (all platforms)
 

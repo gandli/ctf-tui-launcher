@@ -1,0 +1,12 @@
+PackageIdentifier: gandli.ctf-tui
+PackageVersion: __VERSION__
+InstallerType: zip
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/gandli/ctf-tui-launcher/releases/download/v__VERSION__/ctf-tui-windows-x86_64.zip
+    InstallerSha256: __SHA256_WINDOWS_X86_64__
+Dependencies:
+  PackageDependencies:
+    - PackageIdentifier: Docker.DockerDesktop
+ManifestType: installer
+ManifestVersion: 1.6.0

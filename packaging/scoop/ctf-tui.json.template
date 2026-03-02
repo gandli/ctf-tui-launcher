@@ -9,6 +9,9 @@
       "hash": "__SHA256_WINDOWS_X86_64__"
     }
   },
+  "depends": [
+    "docker"
+  ],
   "bin": "ctf-tui.exe",
   "checkver": "github",
   "autoupdate": {

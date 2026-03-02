@@ -51,43 +51,37 @@ winget install Rustlang.Rustup
 cargo install --path .
 ```
 
-### 包管理器安装（brew / scoop / winget / choco）
+### 包管理器一键安装（发布后可用）
 
-> 这些方式先用系统包管理器安装依赖（Rust/Git），再通过 Cargo 安装 `ctf-tui`。
+发布完成后，可直接使用：
 
 #### Homebrew（macOS / Linux）
 
 ```bash
-brew install rustup-init git
-rustup-init -y
-source "$HOME/.cargo/env"
-cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+brew tap gandli/ctf-tui
+brew install ctf-tui
 ```
 
 #### Scoop（Windows）
 
 ```powershell
-scoop install git rustup
-rustup-init -y
-cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+scoop bucket add gandli https://github.com/gandli/scoop-bucket
+scoop install ctf-tui
 ```
 
 #### Winget（Windows）
 
 ```powershell
-winget install Git.Git
-winget install Rustlang.Rustup
-rustup-init -y
-cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+winget install gandli.ctf-tui
 ```
 
 #### Chocolatey（Windows）
 
 ```powershell
-choco install git rustup.install -y
-rustup-init -y
-cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+choco install ctf-tui -y
 ```
+
+以上包模板中已声明 Docker 依赖（作为安装/运行前置）。
 
 ### 源码安装（通用）
 

@@ -23,6 +23,8 @@ class CtfTui < Formula
     end
   end
 
+  depends_on "docker"
+
   def install
     bin.install "ctf-tui"
   end
