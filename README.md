@@ -6,23 +6,46 @@ A Rust TUI launcher for CTF practice environments, inspired by [`CTF-Archives/ct
 
 ## Quick Start (Install + Use)
 
-### Install (recommended one-liner)
+### Install by OS
+
+#### macOS
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gandli/ctf-tui-launcher/main/install.sh)"
 ```
 
-### Or install from source
+#### Linux
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gandli/ctf-tui-launcher/main/install.sh)"
+```
+
+#### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/gandli/ctf-tui-launcher.git
+cd ctf-tui-launcher
+
+# install Rust (if cargo is missing)
+winget install Rustlang.Rustup
+# restart PowerShell after install, then:
+cargo install --path .
+```
+
+### Universal source install (all platforms)
 
 ```bash
 # 1) clone repository
 git clone https://github.com/gandli/ctf-tui-launcher.git
 cd ctf-tui-launcher
 
-# 2) install Rust toolchain (if cargo is missing)
+# 2) install Rust toolchain if cargo is missing
 # macOS / Linux:
 curl https://sh.rustup.rs -sSf | sh
 source "$HOME/.cargo/env"
+
+# Windows (PowerShell):
+# winget install Rustlang.Rustup
 
 # 3) install the CLI
 cargo install --path .

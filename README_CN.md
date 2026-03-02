@@ -4,22 +4,46 @@
 
 ## 快速开始（安装 + 使用）
 
-### 一键安装（推荐）
+### 按系统安装
+
+#### macOS
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gandli/ctf-tui-launcher/main/install.sh)"
 ```
 
-### 或从源码安装
+#### Linux
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gandli/ctf-tui-launcher/main/install.sh)"
+```
+
+#### Windows（PowerShell）
+
+```powershell
+git clone https://github.com/gandli/ctf-tui-launcher.git
+cd ctf-tui-launcher
+
+# 如果没有 cargo，先安装 Rust
+winget install Rustlang.Rustup
+# 安装后重启 PowerShell，再执行：
+cargo install --path .
+```
+
+### 源码安装（通用）
 
 ```bash
 # 1) 克隆仓库
 git clone https://github.com/gandli/ctf-tui-launcher.git
 cd ctf-tui-launcher
 
-# 2) 若本机没有 cargo，先安装 Rust 工具链（macOS / Linux）
+# 2) 若本机没有 cargo，先安装 Rust 工具链
+# macOS / Linux:
 curl https://sh.rustup.rs -sSf | sh
 source "$HOME/.cargo/env"
+
+# Windows (PowerShell):
+# winget install Rustlang.Rustup
 
 # 3) 安装命令行工具
 cargo install --path .
