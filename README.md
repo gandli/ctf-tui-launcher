@@ -6,30 +6,85 @@ A Rust TUI launcher for CTF practice environments, inspired by [`CTF-Archives/ct
 
 CTF challenge reproduction is often messy: scattered folders, repetitive Docker commands, environment drift, and inconsistent writeups.
 
-`ctf-tui-launcher` aims to standardize the workflow into:
+`ctf-tui-launcher` standardizes the workflow into:
 
 **Select challenge → Start target → Solve → Record → Reproduce**
 
 with a keyboard-first terminal experience.
 
-## Core Goals
+## Current Features (M2 + M3)
 
-- One-key challenge environment startup via Docker
-- Dynamic flag environment variable injection (`FLAG`, `GZCTF_FLAG`, `DASCTF`)
-- Unified workflow for local CTF practice and writeup creation
-- Minimal friction for repeated challenge reproduction
+- Split-pane TUI (challenge list + details panel)
+- Challenge status tracking (`todo / doing / done`)
+- Docker actions:
+  - `u`: `docker compose up -d`
+  - `d`: `docker compose down`
+- In-app logs panel:
+  - `l` to open/close
+  - `r` to refresh logs (inside panel)
+  - `j/k` or arrow keys to scroll
+- `s` to open shell in selected challenge workdir (returns to TUI on exit)
+- `w` to generate writeup scaffold at `writeups/<challenge>.md`
+- `t` to cycle challenge status (`todo -> doing -> done -> todo`)
+- Status persistence to `challenges.toml` when config file is present
+- Compose file validation before Docker actions
+- Auto-discovery fallback when no `challenges.toml` is provided
 
-## Planned MVP (v0.1)
+## Configuration
 
-- Challenge list and status in TUI (`todo / doing / done`)
-- Quick actions:
-  - `docker compose up -d`
-  - `docker compose down`
-  - `docker compose logs -f`
-  - open shell in container
-- Container/runtime status panel
-- Writeup markdown scaffold generation
-- Local config loading from `toml`
+### Option A: Explicit config (`challenges.toml`)
+
+Copy `challenges.toml.example` to `challenges.toml` and edit fields.
+
+```toml
+[[challenges]]
+name = "rsa-baby"
+category = "Crypto"
+difficulty = "Easy"
+status = "todo"
+description = "Recover plaintext using weak RSA key setup."
+workdir = "./challenges/rsa-baby/docker"
+```
+
+### Option B: Auto-discovery
+
+If `challenges.toml` is missing, the app scans:
+
+- `./challenges/*/docker`
+
+and includes directories containing one of:
+
+- `docker-compose.yml`
+- `docker-compose.yaml`
+- `compose.yml`
+- `compose.yaml`
+
+## Keymap
+
+### Main view
+
+- `j/k` or `↑/↓`: move selection
+- `u`: start environment
+- `d`: stop environment
+- `l`: open logs panel
+- `s`: open shell in workdir
+- `w`: generate writeup
+- `t`: cycle challenge status
+- `r`: reload challenges
+- `q`: quit
+
+### Logs panel
+
+- `j/k` or `↑/↓`: scroll logs
+- `r`: refresh logs
+- `Esc` or `l`: close logs panel
+- `q`: quit app
+
+## Run
+
+```bash
+cargo run
+```
 
 ## Tech Stack
 
@@ -44,41 +99,14 @@ with a keyboard-first terminal experience.
 ├── src/
 ├── docs/
 │   └── PRD.MD
+├── challenges.toml.example
 ├── Cargo.toml
 └── README.md
 ```
 
-## Development Plan
+## Roadmap (next)
 
-- [ ] Bootstrap TUI layout (left: challenge list, right: details)
-- [ ] Add keymap and command dispatcher
-- [ ] Add Docker actions (`up/down/logs/shell`)
-- [ ] Add challenge metadata parsing
-- [ ] Add writeup generation
-- [ ] Add error handling and health indicators
-
-## Run (Current Skeleton)
-
-```bash
-cargo run
-```
-
-Optional: create `challenges.toml` from `challenges.toml.example` to load your own challenge list.
-
-If `challenges.toml` is missing, the app will auto-discover challenge folders under `./challenges/*/docker` that contain a compose file.
-
-## Status
-
-M2 skeleton is implemented. M3 currently includes:
-
-- Docker actions: `up/down/logs`
-- `s` to open a shell in the selected challenge workdir
-- `w` to generate a writeup scaffold
-- `t` to cycle challenge status (`todo -> doing -> done`) and persist to `challenges.toml` (when present).
-
-If you want to contribute, open an issue with one of these labels:
-
-- `feature:ui`
-- `feature:docker`
-- `feature:writeup`
-- `bug`
+- Better in-app log UX (jump to bottom, tail-follow mode)
+- Safer shell/container interaction
+- Native challenge metadata discovery (category/difficulty conventions)
+- Optional writeup template customization
