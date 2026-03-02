@@ -478,7 +478,32 @@ fn default_challenges() -> Vec<Challenge> {
     ]
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+enum CliCommand {
+    Tui,
+    Init,
+    Doctor,
+    Help,
+}
+
+fn parse_command() -> CliCommand {
+    let mut args = env::args().skip(1);
+    match args.next().as_deref() {
+        None => CliCommand::Tui,
+        Some("tui") => CliCommand::Tui,
+        Some("init") => CliCommand::Init,
+        Some("doctor") => CliCommand::Doctor,
+        Some("help") | Some("-h") | Some("--help") => CliCommand::Help,
+        Some(_) => CliCommand::Help,
+    }
+}
+
+fn print_help() {
+    println!(
+        "ctf-tui - CTF practice launcher\n\nUSAGE:\n  ctf-tui [SUBCOMMAND]\n\nSUBCOMMANDS:\n  tui       Run interactive TUI (default)\n  init      Create challenges.toml from template if missing\n  doctor    Check workspace structure and compose files\n  help      Show this help\n"
+    );
+}
+
+fn run_tui() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
@@ -493,6 +518,66 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.show_cursor()?;
 
     res
+}
+
+fn run_init() -> Result<(), Box<dyn Error>> {
+    let root = detect_workspace_root();
+    let dst = root.join("challenges.toml");
+    if dst.exists() {
+        println!("challenges.toml already exists: {}", dst.display());
+        return Ok(());
+    }
+
+    let src = root.join("challenges.toml.example");
+    let content = if src.exists() {
+        fs::read_to_string(&src)?
+    } else {
+        "[[challenges]]\nname = \"your-challenge\"\ncategory = \"Crypto\"\ndifficulty = \"Easy\"\nstatus = \"todo\"\ndescription = \"Describe this challenge\"\nworkdir = \"./challenges/your-challenge/docker\"\n".to_string()
+    };
+    fs::write(&dst, content)?;
+    println!("Created: {}", dst.display());
+    Ok(())
+}
+
+fn run_doctor() {
+    let root = detect_workspace_root();
+    println!("workspace root: {}", root.display());
+
+    let (challenges, from_cfg) = match load_challenges_from_toml(&root) {
+        Ok((list, _)) => (list, true),
+        Err(_) => (discover_challenges_from_fs(&root), false),
+    };
+
+    println!("source: {}", if from_cfg { "challenges.toml" } else { "auto-discovery" });
+    if challenges.is_empty() {
+        println!("no challenges found");
+        return;
+    }
+
+    for c in challenges {
+        let wd = if Path::new(&c.workdir).is_absolute() {
+            PathBuf::from(&c.workdir)
+        } else {
+            root.join(&c.workdir)
+        };
+        let ok = has_compose_file(&wd);
+        println!("- {:20} compose: {:7} workdir: {}", c.name, if ok { "ok" } else { "missing" }, wd.display());
+    }
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    match parse_command() {
+        CliCommand::Tui => run_tui(),
+        CliCommand::Init => run_init(),
+        CliCommand::Doctor => {
+            run_doctor();
+            Ok(())
+        }
+        CliCommand::Help => {
+            print_help();
+            Ok(())
+        }
+    }
 }
 
 fn run_app(

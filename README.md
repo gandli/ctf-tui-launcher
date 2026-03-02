@@ -89,24 +89,30 @@ and includes directories containing one of:
 - `a`: generate `challenges.toml`
 - `Esc` or `g`: close guide
 
-## Run
+## CLI Usage
 
-From repository root:
-
-```bash
-cargo run
-```
-
-Or install and run as a command:
+Install:
 
 ```bash
 cargo install --path .
-ctf-tui-launcher
-# short alias
-ctf-tui
 ```
 
-`ctf-tui-launcher` can be launched from any challenge subdirectory. It will walk upward to detect the project root by looking for `challenges.toml` or `challenges/`.
+Commands:
+
+```bash
+ctf-tui tui        # run interactive TUI (default)
+ctf-tui init       # create challenges.toml from template
+ctf-tui doctor     # check workspace/challenges/compose files
+ctf-tui help
+```
+
+Long command also works:
+
+```bash
+ctf-tui-launcher tui
+```
+
+You can run the command from any challenge subdirectory. The tool walks upward to detect project root by looking for `challenges.toml` or `challenges/`.
 
 ## Tech Stack
 
