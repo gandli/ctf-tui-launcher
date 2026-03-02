@@ -102,6 +102,8 @@ Or install and run as a command:
 ```bash
 cargo install --path .
 ctf-tui-launcher
+# short alias
+ctf-tui
 ```
 
 `ctf-tui-launcher` can be launched from any challenge subdirectory. It will walk upward to detect the project root by looking for `challenges.toml` or `challenges/`.

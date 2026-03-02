@@ -3,6 +3,14 @@ name = "ctf-tui-launcher"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "ctf-tui-launcher"
+path = "src/main.rs"
+
+[[bin]]
+name = "ctf-tui"
+path = "src/main.rs"
+
 [dependencies]
 ratatui = "0.28"
 crossterm = "0.28"
