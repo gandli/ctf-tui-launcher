@@ -32,6 +32,44 @@ winget install Rustlang.Rustup
 cargo install --path .
 ```
 
+### Package manager installs (brew / scoop / winget / choco)
+
+> These methods install dependencies (Rust/Git) via package managers, then install `ctf-tui` with Cargo.
+
+#### Homebrew (macOS / Linux)
+
+```bash
+brew install rustup-init git
+rustup-init -y
+source "$HOME/.cargo/env"
+cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+```
+
+#### Scoop (Windows)
+
+```powershell
+scoop install git rustup
+rustup-init -y
+cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+```
+
+#### Winget (Windows)
+
+```powershell
+winget install Git.Git
+winget install Rustlang.Rustup
+rustup-init -y
+cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+```
+
+#### Chocolatey (Windows)
+
+```powershell
+choco install git rustup.install -y
+rustup-init -y
+cargo install --git https://github.com/gandli/ctf-tui-launcher ctf-tui
+```
+
 ### Universal source install (all platforms)
 
 ```bash
