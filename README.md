@@ -1,5 +1,7 @@
 # ctf-tui-launcher
 
+**English** | [中文](README_CN.md)
+
 A Rust TUI launcher for CTF practice environments, inspired by [`CTF-Archives/ctf-docker-template`](https://github.com/CTF-Archives/ctf-docker-template).
 
 ## Quick Start (Install + Use)
