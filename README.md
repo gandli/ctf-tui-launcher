@@ -41,6 +41,14 @@ ctf-tui doctor
 ctf-tui tui
 ```
 
+### Instant demo (ready-made examples)
+
+```bash
+cp examples/challenges.toml ./challenges.toml
+ctf-tui doctor
+ctf-tui tui
+```
+
 You can run `ctf-tui` from any challenge subdirectory. The tool walks upward to detect project root by checking `challenges.toml` or `challenges/`.
 
 ---
@@ -148,6 +156,12 @@ and includes directories containing one of:
 
 - `a`: generate `challenges.toml`
 - `Esc` or `g`: close guide
+
+## Example Challenge Pack
+
+- `examples/challenges/` includes 8 category demo challenge folders
+- each demo has `docker/docker-compose.yml` for immediate testing
+- `examples/challenges.toml` is ready to use
 
 ## Tech Stack
 

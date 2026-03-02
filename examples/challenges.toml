@@ -1,0 +1,63 @@
+[[challenges]]
+name = "rsa-baby"
+category = "Crypto"
+difficulty = "Easy"
+status = "todo"
+description = "Example crypto challenge"
+workdir = "./examples/challenges/rsa-baby/docker"
+
+[[challenges]]
+name = "fmt-lab"
+category = "Pwn"
+difficulty = "Medium"
+status = "doing"
+description = "Example pwn challenge"
+workdir = "./examples/challenges/fmt-lab/docker"
+
+[[challenges]]
+name = "tiny-note"
+category = "Web"
+difficulty = "Easy"
+status = "todo"
+description = "Example web challenge"
+workdir = "./examples/challenges/tiny-note/docker"
+
+[[challenges]]
+name = "baby-rev"
+category = "Reverse"
+difficulty = "Easy"
+status = "todo"
+description = "Example reverse challenge"
+workdir = "./examples/challenges/baby-rev/docker"
+
+[[challenges]]
+name = "pcap-hunt"
+category = "Forensics"
+difficulty = "Medium"
+status = "todo"
+description = "Example forensics challenge"
+workdir = "./examples/challenges/pcap-hunt/docker"
+
+[[challenges]]
+name = "odd-puzzle"
+category = "Misc"
+difficulty = "Easy"
+status = "todo"
+description = "Example misc challenge"
+workdir = "./examples/challenges/odd-puzzle/docker"
+
+[[challenges]]
+name = "speed-script"
+category = "PPC"
+difficulty = "Hard"
+status = "todo"
+description = "Example ppc challenge"
+workdir = "./examples/challenges/speed-script/docker"
+
+[[challenges]]
+name = "chain-vault"
+category = "Blockchain"
+difficulty = "Medium"
+status = "todo"
+description = "Example blockchain challenge"
+workdir = "./examples/challenges/chain-vault/docker"

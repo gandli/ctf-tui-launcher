@@ -38,6 +38,14 @@ ctf-tui doctor
 ctf-tui tui
 ```
 
+### 立即体验（内置示例）
+
+```bash
+cp examples/challenges.toml ./challenges.toml
+ctf-tui doctor
+ctf-tui tui
+```
+
 支持在任意题目子目录运行，会自动向上查找项目根目录（`challenges.toml` 或 `challenges/`）。
 
 ---
@@ -110,6 +118,12 @@ workdir = "./challenges/rsa-baby/docker"
 - `docker-compose.yaml`
 - `compose.yml`
 - `compose.yaml`
+
+## 示例题包
+
+- `examples/challenges/` 内置 8 类题型示例目录
+- 每个示例都包含 `docker/docker-compose.yml`，可直接测试
+- `examples/challenges.toml` 可直接复制使用
 
 ## 键位说明
 
