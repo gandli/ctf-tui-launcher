@@ -13,3 +13,51 @@ difficulty = "Medium"
 status = "doing"
 description = "Practice format string leak and arbitrary write."
 workdir = "./challenges/fmt-lab/docker"
+
+[[challenges]]
+name = "tiny-note"
+category = "Web"
+difficulty = "Easy"
+status = "todo"
+description = "Reproduce auth bypass via cookie tampering."
+workdir = "./challenges/tiny-note/docker"
+
+[[challenges]]
+name = "baby-rev"
+category = "Reverse"
+difficulty = "Easy"
+status = "todo"
+description = "Reverse a simple crackme binary."
+workdir = "./challenges/baby-rev/docker"
+
+[[challenges]]
+name = "pcap-hunt"
+category = "Forensics"
+difficulty = "Medium"
+status = "todo"
+description = "Extract evidence from packet capture files."
+workdir = "./challenges/pcap-hunt/docker"
+
+[[challenges]]
+name = "odd-puzzle"
+category = "Misc"
+difficulty = "Easy"
+status = "todo"
+description = "Solve mixed-logic puzzle challenge."
+workdir = "./challenges/odd-puzzle/docker"
+
+[[challenges]]
+name = "speed-script"
+category = "PPC"
+difficulty = "Hard"
+status = "todo"
+description = "Automate interaction with fast scoring service."
+workdir = "./challenges/speed-script/docker"
+
+[[challenges]]
+name = "chain-vault"
+category = "Blockchain"
+difficulty = "Medium"
+status = "todo"
+description = "Analyze smart contract vulnerability and exploit path."
+workdir = "./challenges/chain-vault/docker"

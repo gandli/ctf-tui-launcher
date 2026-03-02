@@ -78,6 +78,17 @@ description = "Recover plaintext using weak RSA key setup."
 workdir = "./challenges/rsa-baby/docker"
 ```
 
+`challenges.toml.example` 已包含题型示例：
+
+- Crypto
+- Pwn
+- Web
+- Reverse
+- Forensics
+- Misc
+- PPC
+- Blockchain
+
 ### 方式 B：自动发现
 
 当不存在 `challenges.toml` 时，自动扫描：

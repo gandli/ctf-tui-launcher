@@ -87,6 +87,17 @@ description = "Recover plaintext using weak RSA key setup."
 workdir = "./challenges/rsa-baby/docker"
 ```
 
+Built-in example categories in `challenges.toml.example`:
+
+- Crypto
+- Pwn
+- Web
+- Reverse
+- Forensics
+- Misc
+- PPC
+- Blockchain
+
 ### Option B: Auto-discovery
 
 If `challenges.toml` is missing, the app scans:
