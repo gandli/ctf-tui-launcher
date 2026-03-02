@@ -82,9 +82,20 @@ and includes directories containing one of:
 
 ## Run
 
+From repository root:
+
 ```bash
 cargo run
 ```
+
+Or install and run as a command:
+
+```bash
+cargo install --path .
+ctf-tui-launcher
+```
+
+`ctf-tui-launcher` can be launched from any challenge subdirectory. It will walk upward to detect the project root by looking for `challenges.toml` or `challenges/`.
 
 ## Tech Stack
 

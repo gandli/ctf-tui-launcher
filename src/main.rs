@@ -1,4 +1,5 @@
 use std::{
+    env,
     error::Error,
     fs,
     io,
@@ -65,6 +66,7 @@ struct App {
     challenges: Vec<Challenge>,
     selected: usize,
     status_message: String,
+    workspace_root: PathBuf,
     config_path: Option<PathBuf>,
     show_logs: bool,
     log_lines: Vec<String>,
@@ -73,11 +75,13 @@ struct App {
 
 impl App {
     fn new() -> Self {
-        let (challenges, config_path) = load_challenges_with_fallback();
+        let workspace_root = detect_workspace_root();
+        let (challenges, config_path) = load_challenges_with_fallback(&workspace_root);
         Self {
             challenges,
             selected: 0,
-            status_message: "Ready. Press q to quit.".to_string(),
+            status_message: format!("Ready. Root: {}", workspace_root.display()),
+            workspace_root,
             config_path,
             show_logs: false,
             log_lines: vec!["Press l to load docker logs".to_string()],
@@ -87,6 +91,15 @@ impl App {
 
     fn selected_challenge(&self) -> Option<&Challenge> {
         self.challenges.get(self.selected)
+    }
+
+    fn challenge_workdir_path(&self, challenge: &Challenge) -> PathBuf {
+        let p = Path::new(&challenge.workdir);
+        if p.is_absolute() {
+            p.to_path_buf()
+        } else {
+            self.workspace_root.join(p)
+        }
     }
 
     fn next(&mut self) {
@@ -112,14 +125,15 @@ impl App {
             return "No challenge selected".to_string();
         };
 
-        if !has_compose_file(&challenge.workdir) {
-            return format!("❌ {} | compose file not found in {}", challenge.name, challenge.workdir);
+        let workdir = self.challenge_workdir_path(challenge);
+        if !has_compose_file(&workdir) {
+            return format!("❌ {} | compose file not found in {}", challenge.name, workdir.display());
         }
 
         let output = Command::new("docker")
             .args(["compose"])
             .args(args)
-            .current_dir(&challenge.workdir)
+            .current_dir(&workdir)
             .output();
 
         match output {
@@ -141,9 +155,10 @@ impl App {
             return;
         };
 
+        let workdir = self.challenge_workdir_path(challenge);
         let output = Command::new("docker")
             .args(["compose", "logs", "--tail", "120", "--no-color"])
-            .current_dir(&challenge.workdir)
+            .current_dir(&workdir)
             .output();
 
         match output {
@@ -242,7 +257,8 @@ impl App {
         let _ = execute!(io::stdout(), LeaveAlternateScreen);
 
         let shell = std::env::var("SHELL").unwrap_or_else(|_| "bash".to_string());
-        let result = Command::new(shell).current_dir(&challenge.workdir).status();
+        let workdir = self.challenge_workdir_path(challenge);
+        let result = Command::new(shell).current_dir(&workdir).status();
 
         let _ = execute!(io::stdout(), EnterAlternateScreen);
         let _ = enable_raw_mode();
@@ -264,7 +280,7 @@ impl App {
     }
 
     fn reload_challenges(&mut self) {
-        let (challenges, config_path) = load_challenges_with_fallback();
+        let (challenges, config_path) = load_challenges_with_fallback(&self.workspace_root);
         self.challenges = challenges;
         self.config_path = config_path;
         self.selected = 0;
@@ -308,12 +324,26 @@ impl App {
     }
 }
 
-fn load_challenges_with_fallback() -> (Vec<Challenge>, Option<PathBuf>) {
-    if let Ok(v) = load_challenges_from_toml() {
+fn detect_workspace_root() -> PathBuf {
+    let mut cur = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    loop {
+        let has_toml = cur.join("challenges.toml").exists();
+        let has_challenges_dir = cur.join("challenges").is_dir();
+        if has_toml || has_challenges_dir {
+            return cur;
+        }
+        if !cur.pop() {
+            return env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        }
+    }
+}
+
+fn load_challenges_with_fallback(root: &Path) -> (Vec<Challenge>, Option<PathBuf>) {
+    if let Ok(v) = load_challenges_from_toml(root) {
         return v;
     }
 
-    let discovered = discover_challenges_from_fs();
+    let discovered = discover_challenges_from_fs(root);
     if !discovered.is_empty() {
         return (discovered, None);
     }
@@ -321,8 +351,8 @@ fn load_challenges_with_fallback() -> (Vec<Challenge>, Option<PathBuf>) {
     (default_challenges(), None)
 }
 
-fn load_challenges_from_toml() -> Result<(Vec<Challenge>, Option<PathBuf>), Box<dyn Error>> {
-    let path = PathBuf::from("challenges.toml");
+fn load_challenges_from_toml(root: &Path) -> Result<(Vec<Challenge>, Option<PathBuf>), Box<dyn Error>> {
+    let path = root.join("challenges.toml");
     if !path.exists() {
         return Err("challenges.toml not found".into());
     }
@@ -335,9 +365,9 @@ fn load_challenges_from_toml() -> Result<(Vec<Challenge>, Option<PathBuf>), Box<
     Ok((parsed.challenges, Some(path)))
 }
 
-fn discover_challenges_from_fs() -> Vec<Challenge> {
+fn discover_challenges_from_fs(root: &Path) -> Vec<Challenge> {
     let mut out = Vec::new();
-    let base = Path::new("challenges");
+    let base = root.join("challenges");
     let Ok(entries) = fs::read_dir(base) else {
         return out;
     };
@@ -375,11 +405,10 @@ fn discover_challenges_from_fs() -> Vec<Challenge> {
     out
 }
 
-fn has_compose_file(workdir: &str) -> bool {
-    let dir = Path::new(workdir);
+fn has_compose_file(workdir: &Path) -> bool {
     ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"]
         .iter()
-        .any(|f| dir.join(f).exists())
+        .any(|f| workdir.join(f).exists())
 }
 
 fn default_challenges() -> Vec<Challenge> {
@@ -526,7 +555,11 @@ fn ui(f: &mut Frame, app: &App) {
             ]),
             Line::from(vec![
                 Span::styled("Compose: ", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(if has_compose_file(&c.workdir) { "found" } else { "missing" }),
+                Span::raw(if has_compose_file(&app.challenge_workdir_path(c)) {
+                    "found"
+                } else {
+                    "missing"
+                }),
             ]),
             Line::raw(""),
             Line::styled("Description", Style::default().add_modifier(Modifier::BOLD)),
