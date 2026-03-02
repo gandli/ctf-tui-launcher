@@ -1,0 +1,17 @@
+{
+  "version": "__VERSION__",
+  "description": "CTF TUI launcher for challenge environment workflows",
+  "homepage": "https://github.com/gandli/ctf-tui-launcher",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/gandli/ctf-tui-launcher/releases/download/v__VERSION__/ctf-tui-windows-x86_64.zip",
+      "hash": "__SHA256_WINDOWS_X86_64__"
+    }
+  },
+  "bin": "ctf-tui.exe",
+  "checkver": "github",
+  "autoupdate": {
+    "url": "https://github.com/gandli/ctf-tui-launcher/releases/download/v$version/ctf-tui-windows-x86_64.zip"
+  }
+}

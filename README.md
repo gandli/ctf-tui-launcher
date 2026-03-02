@@ -245,6 +245,22 @@ and includes directories containing one of:
 - each demo has `docker/docker-compose.yml` for immediate testing
 - `examples/challenges.toml` is ready to use
 
+## Binary Release + Package Managers
+
+The project includes a release workflow:
+
+- `.github/workflows/release.yml`
+- trigger by tag: `v*` (example: `v0.1.0`)
+- publishes binaries + `checksums.txt` to GitHub Releases
+
+Packaging templates are provided in `packaging/` for:
+
+- Homebrew
+- Scoop
+- Winget
+- Chocolatey
+- AUR
+
 ## Tech Stack
 
 - UI: `ratatui` + `crossterm`

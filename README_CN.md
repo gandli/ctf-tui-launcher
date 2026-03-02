@@ -202,6 +202,22 @@ workdir = "./challenges/rsa-baby/docker"
 - `compose.yml`
 - `compose.yaml`
 
+## 二进制发布 + 包管理分发
+
+项目已加入 Release 工作流：
+
+- `.github/workflows/release.yml`
+- 通过 Git tag `v*` 触发（例如 `v0.1.0`）
+- 自动发布多平台二进制与 `checksums.txt`
+
+`packaging/` 目录已提供模板：
+
+- Homebrew
+- Scoop
+- Winget
+- Chocolatey
+- AUR
+
 ## 示例题包
 
 - `examples/challenges/` 内置 8 类题型示例目录

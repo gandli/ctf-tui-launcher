@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>ctf-tui</id>
+    <version>__VERSION__</version>
+    <title>ctf-tui</title>
+    <authors>gandli</authors>
+    <projectUrl>https://github.com/gandli/ctf-tui-launcher</projectUrl>
+    <licenseUrl>https://github.com/gandli/ctf-tui-launcher/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>CTF TUI launcher for challenge environment workflows</description>
+    <tags>ctf tui security docker</tags>
+  </metadata>
+</package>

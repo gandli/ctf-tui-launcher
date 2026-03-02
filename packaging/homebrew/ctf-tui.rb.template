@@ -1,0 +1,33 @@
+class CtfTui < Formula
+  desc "CTF TUI launcher for challenge environment workflows"
+  homepage "https://github.com/gandli/ctf-tui-launcher"
+  version "__VERSION__"
+
+  on_macos do
+    if Hardware::CPU.arm?
+      url "https://github.com/gandli/ctf-tui-launcher/releases/download/v__VERSION__/ctf-tui-macos-aarch64.tar.gz"
+      sha256 "__SHA256_MACOS_AARCH64__"
+    else
+      url "https://github.com/gandli/ctf-tui-launcher/releases/download/v__VERSION__/ctf-tui-macos-x86_64.tar.gz"
+      sha256 "__SHA256_MACOS_X86_64__"
+    end
+  end
+
+  on_linux do
+    if Hardware::CPU.arm?
+      url "https://github.com/gandli/ctf-tui-launcher/releases/download/v__VERSION__/ctf-tui-linux-aarch64.tar.gz"
+      sha256 "__SHA256_LINUX_AARCH64__"
+    else
+      url "https://github.com/gandli/ctf-tui-launcher/releases/download/v__VERSION__/ctf-tui-linux-x86_64.tar.gz"
+      sha256 "__SHA256_LINUX_X86_64__"
+    end
+  end
+
+  def install
+    bin.install "ctf-tui"
+  end
+
+  test do
+    system "#{bin}/ctf-tui", "help"
+  end
+end
