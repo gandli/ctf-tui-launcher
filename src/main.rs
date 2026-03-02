@@ -66,6 +66,8 @@ struct App {
     selected: usize,
     status_message: String,
     config_path: Option<PathBuf>,
+    show_logs: bool,
+    log_lines: Vec<String>,
 }
 
 impl App {
@@ -79,6 +81,8 @@ impl App {
             selected: 0,
             status_message: "Ready. Press q to quit.".to_string(),
             config_path,
+            show_logs: false,
+            log_lines: vec!["Press l to load docker logs".to_string()],
         }
     }
 
@@ -125,6 +129,45 @@ impl App {
                 format!("❌ {} | {}", challenge.name, brief)
             }
             Err(e) => format!("❌ {} | {}", challenge.name, e),
+        }
+    }
+
+    fn refresh_logs(&mut self) {
+        let Some(challenge) = self.selected_challenge() else {
+            self.log_lines = vec!["No challenge selected".to_string()];
+            return;
+        };
+
+        let output = Command::new("docker")
+            .args(["compose", "logs", "--tail", "120", "--no-color"])
+            .current_dir(&challenge.workdir)
+            .output();
+
+        match output {
+            Ok(out) if out.status.success() => {
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                let mut lines: Vec<String> = stdout.lines().map(|s| s.to_string()).collect();
+                if lines.is_empty() {
+                    lines.push("(no logs yet)".to_string());
+                }
+                self.log_lines = lines;
+                self.status_message = format!("Logs loaded ({})", challenge.name);
+            }
+            Ok(out) => {
+                let stderr = String::from_utf8_lossy(&out.stderr);
+                self.log_lines = stderr
+                    .lines()
+                    .map(|s| s.to_string())
+                    .collect::<Vec<_>>();
+                if self.log_lines.is_empty() {
+                    self.log_lines = vec!["failed to fetch logs".to_string()];
+                }
+                self.status_message = format!("❌ logs failed ({})", challenge.name);
+            }
+            Err(e) => {
+                self.log_lines = vec![format!("failed to execute docker compose logs: {e}")];
+                self.status_message = format!("❌ logs failed ({})", challenge.name);
+            }
         }
     }
 
@@ -206,6 +249,19 @@ impl App {
     }
 
     fn on_key(&mut self, code: KeyCode) -> bool {
+        if self.show_logs {
+            match code {
+                KeyCode::Esc | KeyCode::Char('l') => {
+                    self.show_logs = false;
+                    self.status_message = "Close logs panel".to_string();
+                }
+                KeyCode::Char('r') => self.refresh_logs(),
+                KeyCode::Char('q') => return false,
+                _ => {}
+            }
+            return true;
+        }
+
         match code {
             KeyCode::Char('q') => return false,
             KeyCode::Char('j') | KeyCode::Down => self.next(),
@@ -214,7 +270,10 @@ impl App {
             KeyCode::Enter => self.status_message = "Open challenge details (next step).".to_string(),
             KeyCode::Char('u') => self.status_message = self.run_docker_action(&["up", "-d"]),
             KeyCode::Char('d') => self.status_message = self.run_docker_action(&["down"]),
-            KeyCode::Char('l') => self.status_message = self.run_docker_action(&["logs", "--tail", "60"]),
+            KeyCode::Char('l') => {
+                self.show_logs = true;
+                self.refresh_logs();
+            }
             KeyCode::Char('s') => self.open_shell(),
             KeyCode::Char('w') => self.status_message = self.generate_writeup(),
             _ => {}
@@ -295,6 +354,26 @@ fn run_app(
 }
 
 fn ui(f: &mut Frame, app: &App) {
+    if app.show_logs {
+        let logs = app
+            .log_lines
+            .iter()
+            .map(|l| Line::raw(l.as_str()))
+            .collect::<Vec<_>>();
+
+        let panel = Paragraph::new(logs)
+            .block(
+                Block::default()
+                    .title(" Logs (ESC/l to close, r to refresh) ")
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Yellow)),
+            )
+            .wrap(Wrap { trim: false });
+
+        f.render_widget(panel, f.area());
+        return;
+    }
+
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(1), Constraint::Length(3)])
@@ -363,7 +442,7 @@ fn ui(f: &mut Frame, app: &App) {
             Line::raw(&c.description),
             Line::raw(""),
             Line::styled("Actions", Style::default().add_modifier(Modifier::BOLD)),
-            Line::raw("u: up | d: down | l: logs | s: shell | w: writeup | t: cycle status"),
+            Line::raw("u: up | d: down | l: logs-panel | s: shell | w: writeup | t: cycle status"),
         ]
     } else {
         vec![Line::raw("No challenge loaded.")]
